@@ -1,24 +1,14 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import analyzeRouter from './analyze';
+import apiController from '../controllers/api.controller';
 
 const router = Router();
 
 // Health check endpoint
-router.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'MP3 Analyzer API is running' });
-});
+router.get('/health', apiController.health.bind(apiController));
 
 // Root API endpoint
-router.get('/', (_req: Request, res: Response) => {
-  res.json({
-    message: 'MP3 Analyzer API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      analyze: '/api/analyze (POST)'
-    }
-  });
-});
+router.get('/', apiController.info.bind(apiController));
 
 // Mount analyze routes
 router.use('/analyze', analyzeRouter);
