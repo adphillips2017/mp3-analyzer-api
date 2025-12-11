@@ -1,0 +1,32 @@
+{
+  "name": "mp3-analyzer-api",
+  "version": "1.0.0",
+  "description": "An API that accepts an MP3 file and responds with the number of frames in the file.",
+  "homepage": "https://github.com/adphillips2017/mp3-analyzer-api#readme",
+  "bugs": {
+    "url": "https://github.com/adphillips2017/mp3-analyzer-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adphillips2017/mp3-analyzer-api.git"
+  },
+  "license": "MIT",
+  "author": "Adam Phillips",
+  "type": "commonjs",
+  "workspaces": [
+    "api"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=api",
+    "build": "npm run build --workspace=api",
+    "start": "npm run start --workspace=api",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

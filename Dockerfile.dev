@@ -1,0 +1,21 @@
+# Development Dockerfile with hot-reloading
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY api/package*.json ./api/
+
+# Install dependencies (including dev dependencies)
+RUN npm ci
+
+# Expose port
+EXPOSE 3000
+
+# Set environment variable
+ENV NODE_ENV=development
+
+# Start the application in dev mode (tsx watch)
+CMD ["npm", "run", "dev", "--workspace=api"]
