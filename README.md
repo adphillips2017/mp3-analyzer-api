@@ -50,6 +50,9 @@ mp3-analyzer-api/
 │   │   │   └── analyze.ts              # Analyze route definitions
 │   │   ├── middleware.ts        # Express middleware configuration
 │   │   └── index.ts             # Application entry point
+│   ├── postman/                 # Postman collection and environments
+│   │   ├── MP3-Analyzer-API.postman_collection  # Postman collection
+│   │   └── local.postman_environment.json       # Local environment variables
 │   ├── package.json
 │   └── tsconfig.json
 ├── Dockerfile                    # Production Docker image
@@ -204,6 +207,56 @@ Analyzes an MP3 file and returns frame count and other metadata.
 **Status Codes:**
 - `200` - Success
 - `500` - Server error
+
+## Testing with Postman
+
+The project includes a Postman collection and environment file for easy API testing.
+
+### Setup
+
+1. **Import the Collection:**
+   - Open Postman
+   - Click "Import" button
+   - Navigate to `api/postman/MP3-Analyzer-API.postman_collection`
+   - Click "Import" to add the collection
+
+2. **Import the Environment:**
+   - In Postman, click "Import" again
+   - Navigate to `api/postman/local.postman_environment.json`
+   - Click "Import" to add the environment
+
+3. **Select the Environment:**
+   - In the top-right corner of Postman, select "local" from the environment dropdown
+   - This will use the `baseUrl` variable set to `http://localhost:3000/api`
+
+### Environment Variables
+
+The `local` environment includes the following variables:
+
+- **baseUrl**: `http://localhost:3000/api` - Base URL for all API requests
+
+You can modify this variable or create additional environments (e.g., `production`, `staging`) with different base URLs.
+
+### Available Requests
+
+The collection includes the following requests:
+
+- **Analyze MP3 [Valid File]** - POST request to `/analyze` endpoint
+  - Upload an MP3 file using the "file" field in the form-data body
+  - Select a file from your local system to test the upload functionality
+
+### Using the Collection
+
+1. Ensure the API is running (locally or in Docker)
+2. Select the "local" environment in Postman
+3. Open the "MP3 Analyzer API" collection
+4. Navigate to "Analyze MP3s" folder
+5. Select "Analyze MP3 [Valid File]" request
+6. Click "Select Files" next to the "file" field in the Body tab
+7. Choose an MP3 file from your system
+8. Click "Send" to test the endpoint
+
+The collection uses the `{{baseUrl}}` variable, so all requests will automatically use the correct base URL based on your selected environment.
 
 ---
 

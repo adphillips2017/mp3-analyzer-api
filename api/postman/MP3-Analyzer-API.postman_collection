@@ -1,0 +1,48 @@
+{
+	"info": {
+		"_postman_id": "968b0435-361e-478a-b4b9-eb72bc62433f",
+		"name": "MP3 Analyzer API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13243069",
+		"_collection_link": "https://adjp-dev.postman.co/workspace/mp3-analyzer-api~aa092982-15a1-4bd1-bbc9-6f324621ed5f/collection/13243069-968b0435-361e-478a-b4b9-eb72bc62433f?action=share&source=collection_link&creator=13243069"
+	},
+	"item": [
+		{
+			"name": "General",
+			"item": []
+		},
+		{
+			"name": "Analyze MP3s",
+			"item": [
+				{
+					"name": "Analyze MP3 [Valid File]",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/analyze",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"analyze"
+							]
+						},
+						"description": "Uploads an MP3 file for analysis.  \n\nUse sample files in /assets/mp3s\n\n- valid.mp3"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
