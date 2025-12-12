@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AnalyzeResponse } from '@mp3-analyzer/shared';
 import analyzeController from '../../../controllers/analyze.controller';
 
 describe('AnalyzeController', () => {
@@ -28,10 +29,12 @@ describe('AnalyzeController', () => {
       );
 
       expect(responseStatus).toHaveBeenCalledWith(400);
-      expect(responseJson).toHaveBeenCalledWith({
+      const expectedErrorResponse: AnalyzeResponse = {
+        status: 'error',
         error: 'No file uploaded',
         message: 'Please upload an MP3 file using the "file" field in multipart/form-data',
-      });
+      };
+      expect(responseJson).toHaveBeenCalledWith(expectedErrorResponse);
     });
 
     it('should return 200 with status received and fileName when file is uploaded', async () => {
@@ -52,10 +55,11 @@ describe('AnalyzeController', () => {
       );
 
       expect(responseStatus).toHaveBeenCalledWith(200);
-      expect(responseJson).toHaveBeenCalledWith({
+      const expectedSuccessResponse: AnalyzeResponse = {
         status: 'received',
         fileName: 'test.mp3',
-      });
+      };
+      expect(responseJson).toHaveBeenCalledWith(expectedSuccessResponse);
     });
   });
 });

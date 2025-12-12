@@ -13,6 +13,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@mp3-analyzer/shared": "*",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "multer": "^2.0.2"

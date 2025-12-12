@@ -14,16 +14,19 @@
   "author": "Adam Phillips",
   "type": "commonjs",
   "workspaces": [
-    "api"
+    "api",
+    "shared"
   ],
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "dev": "npm run dev --workspace=api",
-    "build": "npm run build --workspace=api",
+    "build": "npm run build --workspace=shared && npm run build --workspace=api",
+    "build:shared": "npm run build --workspace=shared",
+    "build:api": "npm run build --workspace=api",
     "start": "npm run start --workspace=api",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test --workspace=api"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
