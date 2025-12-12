@@ -4,11 +4,13 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY api/package*.json ./api/
+# Copy root package files and lock file
+COPY package.json package-lock.json ./
 
-# Install dependencies
+# Copy API package files
+COPY api/package.json ./api/
+
+# Install all dependencies (including workspace dependencies)
 RUN npm ci
 
 # Copy source code

@@ -4,12 +4,19 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY api/package*.json ./api/
+# Copy root package files and lock file
+COPY package.json package-lock.json ./
 
-# Install dependencies (including dev dependencies)
+# Copy API package files
+COPY api/package.json ./api/
+
+# Install all dependencies (including dev dependencies for workspace)
+# npm workspaces will hoist dependencies to root node_modules
 RUN npm ci
+
+# Copy source code (will be overridden by volume mount in docker-compose)
+# This ensures the directory structure exists
+COPY . .
 
 # Expose port
 EXPOSE 3000
@@ -18,4 +25,6 @@ EXPOSE 3000
 ENV NODE_ENV=development
 
 # Start the application in dev mode (tsx watch)
-CMD ["npm", "run", "dev", "--workspace=api"]
+# Run from api directory to ensure proper module resolution
+WORKDIR /app/api
+CMD ["npm", "run", "dev"]
