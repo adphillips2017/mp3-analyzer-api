@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { HttpStatus } from '../models/HttpStatus';
 
 /**
  * Controller for general API endpoints
@@ -9,7 +10,7 @@ class ApiController {
    * Returns API health status
    */
   health(_req: Request, res: Response): void {
-    res.status(200).json({ 
+    res.status(HttpStatus.OK).json({ 
       status: 'ok', 
       message: 'MP3 Analyzer API is running' 
     });
@@ -20,7 +21,7 @@ class ApiController {
    * Returns API information and available endpoints
    */
   info(_req: Request, res: Response): void {
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       message: 'MP3 Analyzer API',
       version: '1.0.0',
       endpoints: {
