@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AnalyzeResponse } from '@mp3-analyzer/shared';
+import { AnalyzeResponse, ErrorMessages, ResponseStatus } from '@mp3-analyzer/shared';
 import { FileRequest } from '../models/RequestWithFile';
 import { HttpStatus } from '../models/HttpStatus';
 import AnalyzeService from '../services/analyze.service';
@@ -15,9 +15,9 @@ class AnalyzeController {
     // Check if file was uploaded
     if (!req.file) {
       const errorResponse: AnalyzeResponse = {
-        status: 'error',
-        error: 'No file uploaded',
-        message: 'Please upload an MP3 file using the "file" field in multipart/form-data'
+        status: ResponseStatus.ERROR,
+        error: ErrorMessages.NO_FILE_UPLOADED.error,
+        message: ErrorMessages.NO_FILE_UPLOADED.message
       };
       res.status(HttpStatus.BAD_REQUEST).json(errorResponse);
       return;
@@ -27,7 +27,7 @@ class AnalyzeController {
 
     // Return simple confirmation response for now.
     const successResponse: AnalyzeResponse = {
-      status: 'received',
+      status: ResponseStatus.RECEIVED,
       fileName: req.file.originalname,
       frameCount: frames
     };
