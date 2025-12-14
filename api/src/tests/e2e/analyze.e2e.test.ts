@@ -4,6 +4,7 @@ import routes from '../../routes';
 import { setupMiddleware } from '../../middleware';
 import fs from 'fs';
 import path from 'path';
+import { E2E_TEST_TIMEOUT } from './test.config';
 
 describe('Analyze Endpoint E2E', () => {
   let app: Express;
@@ -36,7 +37,7 @@ describe('Analyze Endpoint E2E', () => {
     expect(response.body).toHaveProperty('frameCount');
     expect(typeof response.body.frameCount).toBe('number');
     expect(response.body.frameCount).toBe(targetFrameCount);
-  }, 30000); // 30 second timeout
+  }, E2E_TEST_TIMEOUT);
 
   it('should analyze an additional sample MP3 file and return the correct frame count', async () => {
     // Path to the test MP3 file (from api/src/tests/e2e to root/assets/mp3s)
@@ -60,7 +61,7 @@ describe('Analyze Endpoint E2E', () => {
     expect(response.body).toHaveProperty('frameCount');
     expect(typeof response.body.frameCount).toBe('number');
     expect(response.body.frameCount).toBe(targetFrameCount);
-  }, 30000); // 30 second timeout
+  }, E2E_TEST_TIMEOUT);
 
   it('should return error when no file is uploaded', async () => {
     const response = await request(app)
