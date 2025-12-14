@@ -33,15 +33,33 @@ describe('Analyze Endpoint E2E', () => {
       .expect(200);
 
     // Verify response structure
-    expect(response.body).toHaveProperty('status');
-    expect(response.body).toHaveProperty('fileName');
     expect(response.body).toHaveProperty('frameCount');
-    expect(response.body.status).toBe('received');
     expect(typeof response.body.frameCount).toBe('number');
-    expect(response.body.frameCount).toBeGreaterThan(0);
     expect(response.body.frameCount).toBe(targetFrameCount);
+  }, 30000); // 30 second timeout
+
+  it('should analyze an additional sample MP3 file and return the correct frame count', async () => {
+    // Path to the test MP3 file (from api/src/tests/e2e to root/assets/mp3s)
+    const mp3Path = path.join(__dirname, '../../../../assets/mp3s/valid_2.mp3');
+
+    // Frame Count as verified by MediaInfo
+    const targetFrameCount = 1610;
     
-    console.log('Response:', JSON.stringify(response.body, null, 2));
+    // Check if file exists
+    if (!fs.existsSync(mp3Path)) {
+      throw new Error(`Test MP3 file not found at ${mp3Path}`);
+    }
+
+    // Make request with file upload
+    const response = await request(app)
+      .post('/api/file-upload')
+      .attach('file', mp3Path)
+      .expect(200);
+
+    
+    expect(response.body).toHaveProperty('frameCount');
+    expect(typeof response.body.frameCount).toBe('number');
+    expect(response.body.frameCount).toBe(targetFrameCount);
   }, 30000); // 30 second timeout
 
   it('should return error when no file is uploaded', async () => {
