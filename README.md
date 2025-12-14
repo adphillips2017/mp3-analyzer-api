@@ -14,13 +14,12 @@ The MP3 Analyzer API provides endpoints for analyzing MP3 audio files. The API a
 - Middleware configuration (CORS, JSON parsing)
 - Route structure and controllers
 - Health check and API info endpoints
-- Docker configuration (production and development)
-- Development hot-reloading support
-
-🚧 **In Progress:**
 - MP3 file upload handling
 - MP3 frame counting implementation
 - File parsing and analysis logic
+- Docker configuration (production and development)
+- Development hot-reloading support
+- Unit and E2E test suites
 
 ## End Goal
 
@@ -103,6 +102,19 @@ mp3-analyzer-api/
 
 The API will be available at `http://localhost:3000`
 
+### Environment Variables
+
+Create a `.env` file in the `api/` directory (you can copy from `api/.env.example`) to configure the following options:
+
+- **PORT** (optional): Server port number. Default: `3000`
+- **E2E_TEST_TIMEOUT** (optional): Timeout in milliseconds for E2E tests. Default: `30000` (30 seconds)
+
+Example `.env` file:
+```env
+PORT=3000
+E2E_TEST_TIMEOUT=30000
+```
+
 ### Docker Development (with Hot-Reloading)
 
 1. **Build and run with Docker Compose:**
@@ -173,40 +185,123 @@ Returns API information and available endpoints.
   "version": "1.0.0",
   "endpoints": {
     "health": "/api/health",
-    "analyze": "/api/analyze (POST)"
+    "analyze": "/api/file-upload (POST)"
   }
 }
 ```
 
 ### Analyze MP3 File
 
-**POST** `/api/analyze`
+**POST** `/api/file-upload`
 
-Analyzes an MP3 file and returns frame count and other metadata.
+Analyzes an MP3 file and returns frame count and other metadata. Only MPEG-1 Layer 3 (MP3) files are supported.
 
 **Request:**
-- Content-Type: `multipart/form-data` or `application/json`
-- Body: MP3 file (implementation in progress)
+- Content-Type: `multipart/form-data`
+- Body: Form data with a `file` field containing the MP3 file
 
-**Response (Success):**
+**Example using curl:**
+```bash
+curl -X POST http://localhost:3000/api/file-upload \
+  -F "file=@path/to/your/file.mp3"
+```
+
+**Response (Success - 200):**
 ```json
 {
-  "message": "MP3 analysis completed",
-  "frames": 1234
+  "status": "received",
+  "fileName": "example.mp3",
+  "frameCount": 6089
 }
 ```
 
-**Response (Error):**
+**Response (Error - 400):**
 ```json
 {
-  "error": "Failed to analyze MP3 file",
+  "status": "error",
+  "error": "No file uploaded",
+  "message": "Please upload an MP3 file using the \"file\" field in multipart/form-data"
+}
+```
+
+```json
+{
+  "status": "error",
+  "error": "INVALID_FILE_TYPE",
+  "message": "Only MP3 files are allowed"
+}
+```
+
+**Response (Error - 500):**
+```json
+{
+  "status": "error",
+  "error": "ANALYSIS_ERROR",
   "message": "Error details"
 }
 ```
 
 **Status Codes:**
 - `200` - Success
-- `500` - Server error
+- `400` - Bad Request (no file uploaded or invalid file type)
+- `500` - Internal Server Error
+
+## Testing
+
+The project includes comprehensive test suites for both unit and end-to-end testing.
+
+### Running Tests
+
+All tests are run from the `api/` directory:
+
+1. **Run all tests:**
+   ```bash
+   cd api
+   npm test
+   ```
+
+2. **Run tests in watch mode:**
+   ```bash
+   cd api
+   npm run test:watch
+   ```
+
+3. **Run tests with coverage report:**
+   ```bash
+   cd api
+   npm run test:coverage
+   ```
+
+### Test Structure
+
+- **Unit Tests**: Located in `api/src/tests/unit/`
+  - Controller tests: `api/src/tests/unit/controllers/`
+  - Service tests: `api/src/tests/unit/services/`
+
+- **E2E Tests**: Located in `api/src/tests/e2e/`
+  - Integration tests that test the full request/response cycle
+  - Uses actual MP3 files from `assets/testFiles/`
+
+### Sample Test Files
+
+The project includes sample MP3 files for testing located in `assets/testFiles/`:
+
+**Valid MP3 Files:**
+- `valid_1.mp3` - Expected frame count: 6089
+- `valid_2.mp3` - Expected frame count: 1610
+- `valid_3.mp3` - Expected frame count: 2221
+- `valid_4.mp3` - Expected frame count: 2065
+- `valid_5.mp3` - Expected frame count: 5090
+
+**Invalid Test File:**
+- `invalid_1.mp4` - Used to test file type validation (should be rejected)
+
+These files are used by the E2E test suite to verify the MP3 analysis functionality works correctly with various file sizes and configurations.
+
+### Test Configuration
+
+E2E tests can be configured via environment variables in the `.env` file:
+- `E2E_TEST_TIMEOUT`: Timeout in milliseconds for E2E tests (default: 30000)
 
 ## Testing with Postman
 
@@ -241,9 +336,9 @@ You can modify this variable or create additional environments (e.g., `productio
 
 The collection includes the following requests:
 
-- **Analyze MP3 [Valid File]** - POST request to `/analyze` endpoint
+- **Analyze MP3 [Valid File]** - POST request to `/file-upload` endpoint
   - Upload an MP3 file using the "file" field in the form-data body
-  - Select a file from your local system to test the upload functionality
+  - Select a file from your local system or use the sample files from `assets/testFiles/` to test the upload functionality
 
 ### Using the Collection
 
@@ -253,7 +348,7 @@ The collection includes the following requests:
 4. Navigate to "Analyze MP3s" folder
 5. Select "Analyze MP3 [Valid File]" request
 6. Click "Select Files" next to the "file" field in the Body tab
-7. Choose an MP3 file from your system
+7. Choose an MP3 file from your system (or use `assets/testFiles/valid_1.mp3` for testing)
 8. Click "Send" to test the endpoint
 
 The collection uses the `{{baseUrl}}` variable, so all requests will automatically use the correct base URL based on your selected environment.
