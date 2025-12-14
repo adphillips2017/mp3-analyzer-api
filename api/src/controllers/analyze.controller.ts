@@ -12,26 +12,36 @@ class AnalyzeController {
    * Note: Only MPEG-1 Layer 3 files are supported
    */
   async analyze(req: FileRequest, res: Response<AnalyzeResponse>): Promise<void> {
-    // Check if file was uploaded
-    if (!req.file) {
+    try {
+      // Check if file was uploaded
+      if (!req.file) {
+        const errorResponse: AnalyzeResponse = {
+          status: ResponseStatus.ERROR,
+          error: ErrorMessages.NO_FILE_UPLOADED.error,
+          message: ErrorMessages.NO_FILE_UPLOADED.message
+        };
+        res.status(HttpStatus.BAD_REQUEST).json(errorResponse);
+        return;
+      }
+
+      const frames = await AnalyzeService.getMp3FrameCount(req.file.buffer);
+
+      // Return simple confirmation response for now.
+      const successResponse: AnalyzeResponse = {
+        status: ResponseStatus.RECEIVED,
+        fileName: req.file.originalname,
+        frameCount: frames
+      };
+      res.status(HttpStatus.OK).json(successResponse);
+    } catch (error) {
+      console.error('Error analyzing MP3:', error);
       const errorResponse: AnalyzeResponse = {
         status: ResponseStatus.ERROR,
-        error: ErrorMessages.NO_FILE_UPLOADED.error,
-        message: ErrorMessages.NO_FILE_UPLOADED.message
+        error: 'ANALYSIS_ERROR',
+        message: error instanceof Error ? error.message : 'An error occurred while analyzing the MP3 file'
       };
-      res.status(HttpStatus.BAD_REQUEST).json(errorResponse);
-      return;
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
     }
-
-    const frames = await AnalyzeService.getMp3FrameCount(req.file.buffer);
-
-    // Return simple confirmation response for now.
-    const successResponse: AnalyzeResponse = {
-      status: ResponseStatus.RECEIVED,
-      fileName: req.file.originalname,
-      frameCount: frames
-    };
-    res.status(HttpStatus.OK).json(successResponse);
   }
 }
 

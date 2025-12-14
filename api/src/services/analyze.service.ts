@@ -25,16 +25,24 @@ class AnalyzeService {
   /**
    * Analyze an MP3 file and return frame count
    * We assume the file is an MPEG Version 1 Audio Layer 3 (MP3).
+   * - Skips ID3v2 tags at the start
+   * - Excludes ID3v1 tags at the end
+   * - Does not count frames that end exactly at the file boundary (considered incomplete)
    * @param file - The MP3 file
-   * @returns Object containing analysis results
+   * @returns Frame count
    */
-  // TODO: currently off by 1 compared to mediainfo package.
   async getMp3FrameCount(file: Buffer): Promise<number> {
     let frameCount = 0;
     let position = 0;
     
+    // Skip ID3v2 tag if present at the start of the file
+    position = this.skipId3v2Tag(file, position);
+    
+    // Determine the end position (before ID3v1 tag if present)
+    const endPosition = this.getEndPosition(file);
+    
     // Keep going until we're too close to the end to read a header
-    while (position < file.length - 4) {
+    while (position < endPosition - 4) {
       
       // Try to parse a header at this position
       const header = this.parseFrameHeader(file, position);
@@ -42,14 +50,21 @@ class AnalyzeService {
       // Check if it's a valid MPEG v1 Layer III frame
       if (this.isValidFrame(header)) {
         
+        // Calculate how long this frame is
+        const frameLength = this.calculateFrameLength(header);
+        const nextPosition = position + frameLength;
+        
+        // Key fix: Don't count frames that end exactly at or extend beyond the file boundary
+        // MediaInfo considers these incomplete. This fixes the off-by-one issue.
+        if (nextPosition >= endPosition) {
+          break;
+        }
+        
         // It's valid! Count it
         frameCount++;
         
-        // Calculate how long this frame is
-        const frameLength = this.calculateFrameLength(header);
-        
         // Jump ahead to where the next frame should start
-        position += frameLength;
+        position = nextPosition;
         
       } else {
         // Not a valid frame, move forward 1 byte and keep searching
@@ -58,6 +73,58 @@ class AnalyzeService {
     }
     
     return frameCount;
+  }
+
+  /**
+   * Skip ID3v2 tag if present at the given position
+   * ID3v2 tags start with "ID3" followed by version, flags, and size
+   * @param file - The MP3 file buffer
+   * @param position - Starting position to check
+   * @returns Position after the ID3v2 tag (or original position if no tag)
+   */
+  private skipId3v2Tag(file: Buffer, position: number): number {
+    // Check if we have enough bytes for an ID3v2 header (at least 10 bytes)
+    if (position + 10 > file.length) {
+      return position;
+    }
+    
+    // Check for "ID3" identifier
+    if (file[position] === 0x49 && file[position + 1] === 0x44 && file[position + 2] === 0x33) {
+      // Found ID3v2 tag
+      // Read size from bytes 6-9 (synchsafe integer)
+      const size = (file[position + 6] << 21) | 
+                   (file[position + 7] << 14) | 
+                   (file[position + 8] << 7) | 
+                   file[position + 9];
+      
+      // ID3v2 header is 10 bytes, then the tag data
+      // Some versions may have a footer, but we'll skip based on header size
+      const tagEnd = position + 10 + size;
+      
+      return tagEnd;
+    }
+    
+    return position;
+  }
+
+  /**
+   * Get the end position for frame parsing (before ID3v1 tag if present)
+   * ID3v1 tags are 128 bytes at the end of the file
+   * @param file - The MP3 file buffer
+   * @returns End position for frame parsing
+   */
+  private getEndPosition(file: Buffer): number {
+    // Check for ID3v1 tag at the end (last 128 bytes)
+    if (file.length >= 128) {
+      const id3v1Position = file.length - 128;
+      if (file[id3v1Position] === 0x54 && // 'T'
+          file[id3v1Position + 1] === 0x41 && // 'A'
+          file[id3v1Position + 2] === 0x47) { // 'G'
+        return id3v1Position;
+      }
+    }
+    
+    return file.length;
   }
 
   parseFrameHeader(buffer: Buffer, offset: number): Mp3Header {
