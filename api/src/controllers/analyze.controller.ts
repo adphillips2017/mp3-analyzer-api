@@ -14,7 +14,22 @@ class AnalyzeController {
   async analyze(req: FileRequest, res: Response<AnalyzeResponse>): Promise<void> {
     try {
       // Check if file was uploaded
+      // Note: If multer fileFilter rejects the file, req.file will be undefined
+      // and req.fileValidationError may contain the error message
       if (!req.file) {
+        // Check if there was a file validation error (invalid file type)
+        const fileValidationError = (req as any).fileValidationError;
+        if (fileValidationError) {
+          const errorResponse: AnalyzeResponse = {
+            status: ResponseStatus.ERROR,
+            error: ErrorMessages.INVALID_FILE_TYPE.error,
+            message: ErrorMessages.INVALID_FILE_TYPE.message
+          };
+          res.status(HttpStatus.BAD_REQUEST).json(errorResponse);
+          return;
+        }
+        
+        // No file uploaded at all
         const errorResponse: AnalyzeResponse = {
           status: ResponseStatus.ERROR,
           error: ErrorMessages.NO_FILE_UPLOADED.error,
