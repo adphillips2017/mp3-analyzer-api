@@ -9,7 +9,42 @@
 	"item": [
 		{
 			"name": "General",
-			"item": []
+			"item": [
+				{
+					"name": "Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		},
 		{
 			"name": "Analyze MP3s",
@@ -25,20 +60,48 @@
 								{
 									"key": "file",
 									"type": "file",
+									"src": "postman-cloud:///1f0d6d1f-bab1-4e90-bad8-447e29960775"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/file-upload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"file-upload"
+							]
+						},
+						"description": "Uploads an MP3 file for analysis.\n\nUse sample files in /assets/testFiles\n\n- valid_1.mp3\n    \n- valid_2.mp3\n    \n- valid_3.mp3\n    \n- valid_4.mp3\n    \n- valid_5.mp3"
+					},
+					"response": []
+				},
+				{
+					"name": "Analyze MP3 [No File]",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
 									"src": []
 								}
 							]
 						},
 						"url": {
-							"raw": "{{baseUrl}}/analyze",
+							"raw": "{{baseUrl}}/file-upload",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"analyze"
+								"file-upload"
 							]
 						},
-						"description": "Uploads an MP3 file for analysis.  \n\nUse sample files in /assets/mp3s\n\n- valid.mp3"
+						"description": "Hits the analysis endpoint with no file to test the result."
 					},
 					"response": []
 				}

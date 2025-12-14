@@ -11,6 +11,6 @@ router.get('/health', apiController.health.bind(apiController));
 router.get('/', apiController.info.bind(apiController));
 
 // Mount analyze routes
-router.use('/analyze', analyzeRouter);
+router.use('/file-upload', analyzeRouter);
 
 export default router;

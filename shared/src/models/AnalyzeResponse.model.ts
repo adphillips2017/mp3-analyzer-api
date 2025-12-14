@@ -4,7 +4,7 @@
 export interface AnalyzeResponse {
   status: 'received' | 'success' | 'error';
   fileName?: string;
-  frames?: number;
+  frameCount?: number;
   error?: string;
   message?: string;
 }

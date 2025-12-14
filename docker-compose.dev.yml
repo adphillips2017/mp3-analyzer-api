@@ -17,3 +17,20 @@ services:
       - /app/node_modules
       - /app/api/node_modules
     restart: unless-stopped
+    develop:
+      watch:
+        # Rebuild container if dependencies change
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: api/package.json
+        - action: rebuild
+          path: package-lock.json
+        - action: rebuild
+          path: shared/package.json
+        # Sync shared workspace source changes
+        - action: sync
+          path: shared/src
+          target: /app/shared/src
+          ignore:
+            - node_modules/

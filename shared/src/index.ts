@@ -5,3 +5,5 @@
 
 // Models
 export * from './models/AnalyzeResponse.model';
+export * from './models/ErrorMessages.model';
+export * from './models/ResponseStatus.model';
