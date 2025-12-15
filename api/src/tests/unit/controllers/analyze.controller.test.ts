@@ -65,7 +65,7 @@ describe('AnalyzeController', () => {
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
-      mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
+      mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
 
       await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
@@ -91,7 +91,7 @@ describe('AnalyzeController', () => {
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
-      mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
+      mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
 
       await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
@@ -112,7 +112,7 @@ describe('AnalyzeController', () => {
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
-      mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
+      mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
 
       await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
