@@ -4,6 +4,7 @@
  */
 import { Worker } from 'worker_threads';
 import path from 'path';
+import fs from 'fs';
 import { WorkerExecutor } from './worker-executor.interface';
 import { MAX_WORKERS, WORKER_TIMEOUT_MS } from '../constants/Workers';
 
@@ -12,6 +13,7 @@ interface WorkerTask {
   resolve: (value: number) => void;
   reject: (error: Error) => void;
   timeout: NodeJS.Timeout;
+  timedOut?: boolean;
 }
 
 class WorkerPool implements WorkerExecutor {
@@ -31,22 +33,50 @@ class WorkerPool implements WorkerExecutor {
    */
   async execute(buffer: Buffer): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      // Create timeout for the task
-      const timeout = setTimeout(() => {
-        reject(new Error(`Worker task timed out after ${WORKER_TIMEOUT_MS}ms`));
-      }, WORKER_TIMEOUT_MS);
-
       const task: WorkerTask = {
         buffer,
         resolve: (value) => {
-          clearTimeout(timeout);
-          resolve(value);
+          // Only resolve if not timed out
+          if (!task.timedOut) {
+            clearTimeout(task.timeout);
+            resolve(value);
+          }
         },
         reject: (error) => {
-          clearTimeout(timeout);
-          reject(error);
+          // Only reject if not timed out (timeout already rejected)
+          if (!task.timedOut) {
+            clearTimeout(task.timeout);
+            reject(error);
+          }
         },
-        timeout
+        timeout: setTimeout(() => {
+          // Mark task as timed out
+          task.timedOut = true;
+          clearTimeout(task.timeout);
+
+          // Find and remove the task from workerTasks if it's being processed
+          let timedOutWorker: Worker | undefined;
+          for (const [worker, workerTask] of this.workerTasks.entries()) {
+            if (workerTask === task) {
+              timedOutWorker = worker;
+              this.workerTasks.delete(worker);
+              break;
+            }
+          }
+
+          // If task was being processed, return worker to pool for other tasks
+          if (timedOutWorker) {
+            this.returnWorker(timedOutWorker);
+          } else {
+            // If task was in queue, remove it
+            const queueIndex = this.taskQueue.indexOf(task);
+            if (queueIndex !== -1) {
+              this.taskQueue.splice(queueIndex, 1);
+            }
+          }
+
+          reject(new Error(`Worker task timed out after ${WORKER_TIMEOUT_MS}ms`));
+        }, WORKER_TIMEOUT_MS)
       };
 
       // Try to get an available worker
@@ -81,24 +111,33 @@ class WorkerPool implements WorkerExecutor {
    * Create a new worker thread
    */
   private createWorker(): Worker {
-    // Worker file path - handle both development (ts) and production (js) modes
-    // Try TypeScript file first (for development), fall back to JavaScript (for production)
-    const fs = require('fs');
-    const tsWorkerPath = path.join(__dirname, 'mp3-parser.worker.ts');
-    const jsWorkerPath = path.join(__dirname, 'mp3-parser.worker.js');
-    
     let workerPath: string;
     let execArgv: string[] = [];
     
-    // Check if TypeScript file exists (development mode)
-    // Also check if we're in a test environment (Jest uses ts-jest which can handle .ts files)
-    if (fs.existsSync(tsWorkerPath) || process.env.NODE_ENV !== 'production') {
-      workerPath = tsWorkerPath;
-      // Use tsx loader for TypeScript execution
-      execArgv = ['-r', 'tsx/cjs'];
+    // Simplify path resolution:
+    // - Production: always use .js from dist/workers/
+    // - Development/test: use .ts from src/workers/ with tsx
+    if (process.env.NODE_ENV === 'production') {
+      // Production mode: use compiled JavaScript
+      workerPath = path.join(__dirname, 'mp3-parser.worker.js');
+      
+      // Verify the file exists
+      if (!fs.existsSync(workerPath)) {
+        throw new Error(
+          `Worker file not found: ${workerPath}. Make sure the project is built before running in production.`
+        );
+      }
     } else {
-      // Use compiled JavaScript (production mode)
-      workerPath = jsWorkerPath;
+      // Development/test mode: use TypeScript with tsx
+      workerPath = path.join(__dirname, 'mp3-parser.worker.ts');
+      execArgv = ['-r', 'tsx/cjs'];
+      
+      // Verify the file exists
+      if (!fs.existsSync(workerPath)) {
+        throw new Error(
+          `Worker file not found: ${workerPath}. Make sure the source file exists.`
+        );
+      }
     }
     
     const worker = new Worker(workerPath, {
@@ -108,6 +147,14 @@ class WorkerPool implements WorkerExecutor {
     worker.on('message', (result: { success: boolean; frameCount?: number; error?: string }) => {
       const task = this.workerTasks.get(worker);
       if (!task) {
+        return;
+      }
+
+      // Ignore results from timed-out tasks
+      if (task.timedOut) {
+        this.workerTasks.delete(worker);
+        // Return worker to pool for other tasks
+        this.returnWorker(worker);
         return;
       }
 
@@ -174,7 +221,7 @@ class WorkerPool implements WorkerExecutor {
   }
 
   /**
-   * Remove a failed worker
+   * Remove a failed worker and replace it if needed to maintain pool capacity
    */
   private removeWorker(worker: Worker): void {
     const index = this.workers.indexOf(worker);
@@ -193,6 +240,32 @@ class WorkerPool implements WorkerExecutor {
     worker.terminate().catch(() => {
       // Ignore termination errors
     });
+
+    // Replace the failed worker to maintain pool capacity up to MAX_WORKERS
+    // This ensures the pool can continue handling the expected load
+    if (this.workers.length < MAX_WORKERS) {
+      try {
+        const replacementWorker = this.createWorker();
+        
+        // If there are queued tasks, immediately assign one to the new worker
+        if (this.taskQueue.length > 0) {
+          const nextTask = this.taskQueue.shift();
+          if (nextTask) {
+            this.executeTask(replacementWorker, nextTask);
+          } else {
+            // No task to assign, add to available pool
+            this.availableWorkers.push(replacementWorker);
+          }
+        } else {
+          // No queued tasks, add to available pool
+          this.availableWorkers.push(replacementWorker);
+        }
+      } catch (error) {
+        // Log error but don't throw - pool can continue with reduced capacity
+        // In production, you might want to use a proper logger here
+        console.error('Failed to replace worker after failure:', error);
+      }
+    }
   }
 
   /**

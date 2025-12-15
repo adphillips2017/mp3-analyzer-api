@@ -8,7 +8,9 @@ import { E2E_TEST_TIMEOUT } from './test.config';
 import { HttpStatus } from '../../constants/HttpStatus';
 import { ROUTES } from '../../constants/Routes';
 import { FILE_FIELD_NAME } from '../../constants/FileUpload';
-import { getWorkerPool } from '../../workers/worker-pool';
+import { getWorkerPool, createWorkerPool } from '../../workers/worker-pool';
+// Import service to ensure worker pool is initialized
+import '../../services/analyze.service';
 
 describe('Analyze Endpoint E2E', () => {
   let app: Express;
@@ -28,6 +30,11 @@ describe('Analyze Endpoint E2E', () => {
   };
 
   beforeAll(() => {
+    // Ensure worker pool is initialized
+    if (!getWorkerPool()) {
+      createWorkerPool();
+    }
+    
     app = express();
     setupMiddleware(app);
     app.use(ROUTES.API_BASE, routes);
