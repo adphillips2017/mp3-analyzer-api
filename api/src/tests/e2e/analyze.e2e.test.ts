@@ -8,6 +8,7 @@ import { E2E_TEST_TIMEOUT } from './test.config';
 import { HttpStatus } from '../../constants/HttpStatus';
 import { ROUTES } from '../../constants/Routes';
 import { FILE_FIELD_NAME } from '../../constants/FileUpload';
+import { getWorkerPool } from '../../workers/worker-pool';
 
 describe('Analyze Endpoint E2E', () => {
   let app: Express;
@@ -30,6 +31,14 @@ describe('Analyze Endpoint E2E', () => {
     app = express();
     setupMiddleware(app);
     app.use(ROUTES.API_BASE, routes);
+  });
+
+  afterAll(async () => {
+    // Cleanup worker pool after all tests
+    const workerPool = getWorkerPool();
+    if (workerPool) {
+      await workerPool.terminate();
+    }
   });
 
   // Data-driven tests for MP3 file analysis

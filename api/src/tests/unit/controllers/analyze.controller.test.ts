@@ -65,9 +65,9 @@ describe('AnalyzeController', () => {
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
-      mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
+      mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
 
-      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       // Should call service with the file buffer
       expect(mockGetMp3FrameCount).toHaveBeenCalledTimes(1);
@@ -91,9 +91,9 @@ describe('AnalyzeController', () => {
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
-      mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
+      mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
 
-      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
       expect(responseJson).toHaveBeenCalledWith({ frameCount: mockFrameCount });
@@ -112,9 +112,9 @@ describe('AnalyzeController', () => {
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
-      mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
+      mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
 
-      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
       expect(responseJson).toHaveBeenCalledWith({ frameCount: 0 });
