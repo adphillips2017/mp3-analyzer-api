@@ -4,7 +4,6 @@ import { FileRequest } from '../models/RequestWithFile';
 import { HttpStatus } from '../models/HttpStatus';
 import AnalyzeService from '../services/analyze.service';
 
-
 class AnalyzeController {
   /**
    * Handle POST /api/analyze
@@ -27,7 +26,7 @@ class AnalyzeController {
           res.status(HttpStatus.BAD_REQUEST).json(errorResponse);
           return;
         }
-        
+
         // No file uploaded at all
         const errorResponse: AnalyzeResponse = {
           status: ResponseStatus.ERROR,
@@ -46,7 +45,8 @@ class AnalyzeController {
       const errorResponse: AnalyzeResponse = {
         status: ResponseStatus.ERROR,
         error: 'ANALYSIS_ERROR',
-        message: error instanceof Error ? error.message : 'An error occurred while analyzing the MP3 file'
+        message:
+          error instanceof Error ? error.message : 'An error occurred while analyzing the MP3 file'
       };
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
     }

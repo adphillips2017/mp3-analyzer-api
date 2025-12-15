@@ -18,11 +18,11 @@ describe('AnalyzeController', () => {
     beforeEach(() => {
       responseJson = jest.fn();
       responseStatus = jest.fn().mockReturnValue({ json: responseJson });
-      
+
       mockRequest = {};
       mockResponse = {
         status: responseStatus,
-        json: responseJson,
+        json: responseJson
       };
 
       // Setup service mock
@@ -37,20 +37,17 @@ describe('AnalyzeController', () => {
     it('should return 400 error when no file is uploaded', async () => {
       mockRequest.file = undefined;
 
-      await analyzeController.analyze(
-        mockRequest as Request,
-        mockResponse as Response
-      );
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       // Should not call the service when no file is uploaded
       expect(mockGetMp3FrameCount).not.toHaveBeenCalled();
-      
+
       // Should return error response
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
       const expectedErrorResponse: AnalyzeResponse = {
         status: ResponseStatus.ERROR,
         error: ErrorMessages.NO_FILE_UPLOADED.error,
-        message: ErrorMessages.NO_FILE_UPLOADED.message,
+        message: ErrorMessages.NO_FILE_UPLOADED.message
       };
       expect(responseJson).toHaveBeenCalledWith(expectedErrorResponse);
     });
@@ -64,16 +61,13 @@ describe('AnalyzeController', () => {
         encoding: '7bit',
         mimetype: 'audio/mpeg',
         buffer: mockFileBuffer,
-        size: 1234,
+        size: 1234
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
       mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
 
-      await analyzeController.analyze(
-        mockRequest as Request,
-        mockResponse as Response
-      );
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       // Should call service with the file buffer
       expect(mockGetMp3FrameCount).toHaveBeenCalledTimes(1);
@@ -93,16 +87,13 @@ describe('AnalyzeController', () => {
         encoding: '7bit',
         mimetype: 'audio/mpeg',
         buffer: mockFileBuffer,
-        size: 5678,
+        size: 5678
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
       mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
 
-      await analyzeController.analyze(
-        mockRequest as Request,
-        mockResponse as Response
-      );
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
       expect(responseJson).toHaveBeenCalledWith({ frameCount: mockFrameCount });
@@ -117,16 +108,13 @@ describe('AnalyzeController', () => {
         encoding: '7bit',
         mimetype: 'audio/mpeg',
         buffer: mockFileBuffer,
-        size: 100,
+        size: 100
       };
 
       mockRequest.file = mockFile as Express.Multer.File;
       mockGetMp3FrameCount.mockResolvedValue(mockFrameCount);
 
-      await analyzeController.analyze(
-        mockRequest as Request,
-        mockResponse as Response
-      );
+      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
       expect(responseJson).toHaveBeenCalledWith({ frameCount: 0 });

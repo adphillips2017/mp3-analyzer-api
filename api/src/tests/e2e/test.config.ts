@@ -1,6 +1,6 @@
 /**
  * E2E Test Configuration
- * 
+ *
  * Timeout values can be overridden by:
  * - Setting E2E_TEST_TIMEOUT in .env file (in api directory)
  * - Setting E2E_TEST_TIMEOUT environment variable

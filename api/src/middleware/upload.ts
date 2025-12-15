@@ -6,7 +6,11 @@ import { ErrorMessages } from '@mp3-analyzer/shared';
 const storage = multer.memoryStorage();
 
 // File filter to only accept MP3 files
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback): void => {
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+): void => {
   // Check if file is MP3
   if (isMp3(file)) {
     cb(null, true);

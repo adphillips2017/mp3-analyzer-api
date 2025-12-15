@@ -10,9 +10,9 @@ class ApiController {
    * Returns API health status
    */
   health(_req: Request, res: Response): void {
-    res.status(HttpStatus.OK).json({ 
-      status: 'ok', 
-      message: 'MP3 Analyzer API is running' 
+    res.status(HttpStatus.OK).json({
+      status: 'ok',
+      message: 'MP3 Analyzer API is running'
     });
   }
 
