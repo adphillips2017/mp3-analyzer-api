@@ -31,7 +31,7 @@ class AnalyzeService {
    * @param file - The MP3 file
    * @returns Frame count
    */
-  async getMp3FrameCount(file: Buffer): Promise<number> {
+  getMp3FrameCount(file: Buffer): number {
     let frameCount = 0;
     let position = 0;
     

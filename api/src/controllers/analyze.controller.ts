@@ -11,13 +11,13 @@ class AnalyzeController {
    * Accepts MP3 file and returns frame count
    * Note: Only MPEG-1 Layer 3 files are supported
    */
-  async analyze(req: FileRequest, res: Response<AnalyzeResponse>): Promise<void> {
+  analyze(req: FileRequest, res: Response<AnalyzeResponse>): void {
     try {
       // Check if file was uploaded
       // Note: If multer fileFilter rejects the file, req.file will be undefined
       if (!req.file) {
         // Check if there was a file validation error (invalid file type)
-        const fileValidationError = (req as any).fileValidationError;
+        const fileValidationError = req.fileValidationError;
         if (fileValidationError) {
           const errorResponse: AnalyzeResponse = {
             status: ResponseStatus.ERROR,
@@ -38,10 +38,10 @@ class AnalyzeController {
         return;
       }
 
-      const frames = await AnalyzeService.getMp3FrameCount(req.file.buffer);
+      const frames = AnalyzeService.getMp3FrameCount(req.file.buffer);
 
       res.status(HttpStatus.OK).json({ frameCount: frames });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error analyzing MP3:', error);
       const errorResponse: AnalyzeResponse = {
         status: ResponseStatus.ERROR,
