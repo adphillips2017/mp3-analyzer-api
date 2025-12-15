@@ -18,7 +18,8 @@
  *
  */
 
-import { BITRATES_V1_L3, Mp3Header, SAMPLE_RATES_V1 } from '../models/Mp3';
+import { BITRATES_V1_L3, SAMPLE_RATES_V1 } from '../constants/Mp3';
+import { Mp3Header } from '../models/Mp3';
 
 class AnalyzeService {
   /**

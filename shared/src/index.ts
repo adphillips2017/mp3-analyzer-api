@@ -5,5 +5,7 @@
 
 // Models
 export * from './models/AnalyzeResponse.model';
-export * from './models/ErrorMessages.model';
-export * from './models/ResponseStatus.model';
+
+// Constants
+export * from './constants/ErrorMessages';
+export * from './constants/ResponseStatus';

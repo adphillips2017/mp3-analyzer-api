@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AnalyzeResponse, ErrorMessages, ResponseStatus } from '@mp3-analyzer/shared';
 import analyzeController from '../../../controllers/analyze.controller';
-import { HttpStatus } from '../../../models/HttpStatus';
+import { HttpStatus } from '../../../constants/HttpStatus';
 import AnalyzeService from '../../../services/analyze.service';
 
 // Mock the service

@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AnalyzeResponse, ErrorMessages, ResponseStatus } from '@mp3-analyzer/shared';
 import { FileRequest } from '../models/RequestWithFile';
-import { HttpStatus } from '../models/HttpStatus';
+import { HttpStatus } from '../constants/HttpStatus';
 import AnalyzeService from '../services/analyze.service';
 
 class AnalyzeController {

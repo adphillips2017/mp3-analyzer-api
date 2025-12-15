@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { HttpStatus } from '../models/HttpStatus';
+import { HttpStatus } from '../constants/HttpStatus';
 
 /**
  * Controller for general API endpoints
