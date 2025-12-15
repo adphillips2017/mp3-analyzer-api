@@ -37,7 +37,7 @@ describe('AnalyzeController', () => {
     it('should return 400 error when no file is uploaded', async () => {
       mockRequest.file = undefined;
 
-      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       // Should not call the service when no file is uploaded
       expect(mockGetMp3FrameCount).not.toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe('AnalyzeController', () => {
       mockRequest.file = mockFile as Express.Multer.File;
       mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
 
-      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       // Should call service with the file buffer
       expect(mockGetMp3FrameCount).toHaveBeenCalledTimes(1);
@@ -93,7 +93,7 @@ describe('AnalyzeController', () => {
       mockRequest.file = mockFile as Express.Multer.File;
       mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
 
-      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
       expect(responseJson).toHaveBeenCalledWith({ frameCount: mockFrameCount });
@@ -114,7 +114,7 @@ describe('AnalyzeController', () => {
       mockRequest.file = mockFile as Express.Multer.File;
       mockGetMp3FrameCount.mockReturnValue(mockFrameCount);
 
-      await analyzeController.analyze(mockRequest as Request, mockResponse as Response);
+      analyzeController.analyze(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
       expect(responseJson).toHaveBeenCalledWith({ frameCount: 0 });

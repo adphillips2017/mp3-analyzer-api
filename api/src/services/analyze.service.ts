@@ -41,48 +41,66 @@ class AnalyzeService {
    * - Skips ID3v2 tags at the start
    * - Excludes ID3v1 tags at the end
    * - Does not count frames that end exactly at the file boundary (considered incomplete)
+   *
+   * Performance Note: This implementation loads the entire file into memory for parsing.
+   * For very large MP3 files, consider implementing streaming-based parsing to optimize
+   * memory usage.
+   *
    * @param file - The MP3 file
-   * @returns Frame count
+   * @returns Frame count (returns 0 if file is corrupted or invalid)
+   * @throws Error if file buffer operations fail unexpectedly
    */
   getMp3FrameCount(file: Buffer): number {
-    let frameCount = 0;
-    let position = 0;
+    try {
+      let frameCount = 0;
+      let position = 0;
 
-    // Skip ID3v2 tag if present at the start of the file
-    position = this.skipId3v2Tag(file, position);
+      // Skip ID3v2 tag if present at the start of the file
+      position = this.skipId3v2Tag(file, position);
 
-    // Determine the end position (before ID3v1 tag if present)
-    const endPosition = this.getEndPosition(file);
+      // Determine the end position (before ID3v1 tag if present)
+      const endPosition = this.getEndPosition(file);
 
-    // Keep going until we're too close to the end to read a header
-    while (position < endPosition - MP3_FRAME_HEADER_SIZE) {
-      // Try to parse a header at this position
-      const header = this.parseFrameHeader(file, position);
+      // Keep going until we're too close to the end to read a header
+      while (position < endPosition - MP3_FRAME_HEADER_SIZE) {
+        // Try to parse a header at this position
+        const header = this.parseFrameHeader(file, position);
 
-      // Check if it's a valid MPEG v1 Layer III frame
-      if (this.isValidFrame(header)) {
-        // Calculate how long this frame is
-        const frameLength = this.calculateFrameLength(header);
-        const nextPosition = position + frameLength;
+        // Check if it's a valid MPEG v1 Layer III frame
+        if (this.isValidFrame(header)) {
+          // Calculate how long this frame is
+          const frameLength = this.calculateFrameLength(header);
+          const nextPosition = position + frameLength;
 
-        // Key fix: Don't count frames that end exactly at or extend beyond the file boundary
-        // MediaInfo considers these incomplete. This fixes the off-by-one issue.
-        if (nextPosition >= endPosition) {
-          break;
+          // Key fix: Don't count frames that end exactly at or extend beyond the file boundary
+          // MediaInfo considers these incomplete. This fixes the off-by-one issue.
+          if (nextPosition >= endPosition) {
+            break;
+          }
+
+          // It's valid! Count it
+          frameCount++;
+
+          // Jump ahead to where the next frame should start
+          position = nextPosition;
+        } else {
+          // Not a valid frame, move forward 1 byte and keep searching
+          position++;
         }
-
-        // It's valid! Count it
-        frameCount++;
-
-        // Jump ahead to where the next frame should start
-        position = nextPosition;
-      } else {
-        // Not a valid frame, move forward 1 byte and keep searching
-        position++;
       }
-    }
 
-    return frameCount;
+      return frameCount;
+    } catch (error) {
+      // Handle corrupted or invalid MP3 files
+      // If parsing fails due to malformed data, return 0 frames
+      // Re-throw unexpected errors (e.g., null/undefined buffer)
+      if (error instanceof RangeError || error instanceof TypeError) {
+        // Buffer access errors indicate corrupted/invalid file
+        return 0;
+      }
+      // Re-throw other errors to be handled by controller
+      throw error;
+    }
   }
 
   /**
@@ -145,6 +163,13 @@ class AnalyzeService {
   }
 
   parseFrameHeader(buffer: Buffer, offset: number): Mp3Header {
+    // Check bounds before reading to prevent RangeError
+    if (offset + 4 > buffer.length) {
+      throw new RangeError(
+        `Cannot read frame header: offset ${offset} + 4 exceeds buffer length ${buffer.length}`
+      );
+    }
+
     // Read 4 bytes as one big number
     // Big Endian means "read left to right, most significant byte first"
     const headerBytes = buffer.readUInt32BE(offset);
@@ -229,7 +254,8 @@ class AnalyzeService {
     // Why 144? It comes from:
     // - Each frame has 1152 samples
     // - 1152 samples / 8 bits per byte = 144
-    const frameLength = Math.floor((FRAME_LENGTH_MULTIPLIER * bitrateInBps) / sampleRate) + header.padding;
+    const frameLength =
+      Math.floor((FRAME_LENGTH_MULTIPLIER * bitrateInBps) / sampleRate) + header.padding;
 
     return frameLength;
   }

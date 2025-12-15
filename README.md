@@ -20,16 +20,11 @@ The MP3 Analyzer API provides endpoints for analyzing MP3 audio files. The API a
 - Docker configuration (production and development)
 - Development hot-reloading support
 - Unit and E2E test suites
-
-## End Goal
-
-The goal is to create a fully functional MP3 analyzer API that can:
 - Accept MP3 file uploads via HTTP POST requests
 - Parse and analyze MP3 file structure
-- Return accurate frame count and other metadata
-- Handle various MP3 formats and bitrates
+- Return accurate frame count for MPEG-1 Layer 3 files
+- Handle MPEG-1 Layer 3 (MP3) files with various bitrates and sample rates
 - Provide error handling for invalid or corrupted files
-- Support batch processing capabilities
 
 ## Architecture & File Structure
 
@@ -211,8 +206,6 @@ curl -X POST http://localhost:3000/api/file-upload \
 **Response (Success - 200):**
 ```json
 {
-  "status": "received",
-  "fileName": "example.mp3",
   "frameCount": 6089
 }
 ```
