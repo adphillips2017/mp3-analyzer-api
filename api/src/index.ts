@@ -2,8 +2,7 @@ import express from 'express';
 import routes from './routes';
 import { setupMiddleware } from './middleware';
 import { ROUTES } from './constants/Routes';
-import { PORT } from './constants/Server';
-import analyzeRouter from './routes/analyze';
+import { PORT, HOST } from './constants/Server';
 
 const app = express();
 
@@ -14,13 +13,9 @@ setupMiddleware(app);
 // Routes - mount all routes under /api
 app.use(ROUTES.API_BASE, routes);
 
-// Forward /file-upload to /api/file-upload
-// additional measure to ensure app meets the requirement:
-// "application must host an endpoint at /file-upload"
-// app.post('/file-upload', analyzeRouter);
 
-// Start server - bind to 0.0.0.0 to accept connections from all interfaces
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Start server - bind to HOST to accept connections from all interfaces
+const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on port: ${PORT}`);
   console.log(`Server is accessible at http://localhost:${PORT}`);
   console.log(`Health check: http://localhost:${PORT}${ROUTES.API_BASE}${ROUTES.HEALTH}`);
