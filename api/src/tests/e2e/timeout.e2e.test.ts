@@ -77,30 +77,26 @@ describe('Request Timeout E2E', () => {
         const testTimeout = timeout(TEST_TIMEOUT_MS, { respond: false });
 
         // Create a route that simulates a long-running operation
-        testApp.post(
-          `${ROUTES.API_BASE}${ROUTES.FILE_UPLOAD}`,
-          testTimeout,
-          async (req, res) => {
-            if (req.timedout) {
-              sendTimeoutResponse(res);
-              return;
-            }
-
-            // Simulate operation that exceeds timeout
-            await simulateLongRunningOperation(req, TEST_TIMEOUT_MS + 500);
-
-            // Handle timeout if it occurred during the operation
-            if (req.timedout) {
-              sendTimeoutResponse(res);
-              return;
-            }
-
-            // Success response (should not reach here in this test)
-            if (!res.headersSent) {
-              res.status(HttpStatus.OK).json({ frameCount: 0 });
-            }
+        testApp.post(`${ROUTES.API_BASE}${ROUTES.FILE_UPLOAD}`, testTimeout, async (req, res) => {
+          if (req.timedout) {
+            sendTimeoutResponse(res);
+            return;
           }
-        );
+
+          // Simulate operation that exceeds timeout
+          await simulateLongRunningOperation(req, TEST_TIMEOUT_MS + 500);
+
+          // Handle timeout if it occurred during the operation
+          if (req.timedout) {
+            sendTimeoutResponse(res);
+            return;
+          }
+
+          // Success response (should not reach here in this test)
+          if (!res.headersSent) {
+            res.status(HttpStatus.OK).json({ frameCount: 0 });
+          }
+        });
 
         // Make request that will timeout
         const response = await request(testApp)

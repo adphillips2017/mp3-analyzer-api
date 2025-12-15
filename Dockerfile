@@ -7,8 +7,9 @@ WORKDIR /app
 # Copy root package files and lock file
 COPY package.json package-lock.json ./
 
-# Copy API package files
+# Copy workspace package files (needed for npm workspaces)
 COPY api/package.json ./api/
+COPY shared/package.json ./shared/
 
 # Install all dependencies (including workspace dependencies)
 RUN npm ci

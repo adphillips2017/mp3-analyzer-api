@@ -11,20 +11,24 @@ The MP3 Analyzer API provides endpoints for analyzing MP3 audio files. The API a
 ✅ **Completed:**
 - Project structure and architecture setup
 - Express.js server with TypeScript
-- Middleware configuration (CORS, JSON parsing)
+- Middleware configuration (CORS, JSON parsing, rate limiting, request timeout)
 - Route structure and controllers
 - Health check and API info endpoints
-- MP3 file upload handling
+- MP3 file upload handling with file size and type validation
 - MP3 frame counting implementation
 - File parsing and analysis logic
 - Docker configuration (production and development)
 - Development hot-reloading support
-- Unit and E2E test suites
+- Unit and E2E test suites (including rate limiting and timeout tests)
+- Code quality tools (ESLint, Prettier, TypeScript type checking)
+- Postman collection and environment configuration
 - Accept MP3 file uploads via HTTP POST requests
 - Parse and analyze MP3 file structure
 - Return accurate frame count for MPEG-1 Layer 3 files
 - Handle MPEG-1 Layer 3 (MP3) files with various bitrates and sample rates
 - Provide error handling for invalid or corrupted files
+- Rate limiting for API protection
+- Request timeout handling
 
 ## Architecture & File Structure
 
@@ -42,13 +46,31 @@ mp3-analyzer-api/
 │   │   ├── routes/              # Route definitions
 │   │   │   ├── index.ts               # Main router (mounts all routes)
 │   │   │   └── analyze.ts              # Analyze route definitions
+│   │   ├── middleware/         # Custom middleware
+│   │   │   ├── rateLimit.ts           # Rate limiting middleware
+│   │   │   ├── timeout.ts             # Request timeout middleware
+│   │   │   └── upload.ts              # File upload middleware
 │   │   ├── middleware.ts        # Express middleware configuration
+│   │   ├── constants/           # Application constants
+│   │   ├── models/              # TypeScript models and interfaces
+│   │   ├── tests/               # Test suites
+│   │   │   ├── unit/                 # Unit tests
+│   │   │   └── e2e/                  # End-to-end tests
 │   │   └── index.ts             # Application entry point
 │   ├── postman/                 # Postman collection and environments
 │   │   ├── MP3-Analyzer-API.postman_collection  # Postman collection
 │   │   └── local.postman_environment.json       # Local environment variables
+│   ├── .eslintrc.json           # ESLint configuration
+│   ├── .prettierrc              # Prettier configuration
 │   ├── package.json
 │   └── tsconfig.json
+├── shared/                       # Shared workspace (common models and constants)
+│   ├── src/
+│   │   ├── constants/           # Shared constants
+│   │   └── models/              # Shared TypeScript models
+│   └── package.json
+├── assets/                       # Test assets
+│   └── testFiles/               # Sample MP3 files for testing
 ├── Dockerfile                    # Production Docker image
 ├── Dockerfile.dev                # Development Docker image (hot-reload)
 ├── docker-compose.yml            # Production Docker Compose
@@ -63,8 +85,9 @@ mp3-analyzer-api/
 - **Controllers**: Handle HTTP requests and responses, delegate business logic to services
 - **Services**: Contain business logic and data processing
 - **Routes**: Define API endpoints and map them to controllers
-- **Middleware**: Configure Express middleware (CORS, body parsing, etc.)
+- **Middleware**: Configure Express middleware (CORS, body parsing, rate limiting, timeout, file upload)
 - **Entry Point**: Initializes Express app, sets up middleware, mounts routes, starts server
+- **Shared Workspace**: Common TypeScript models and constants shared between workspaces
 
 ## Running the API
 
@@ -103,12 +126,18 @@ Create a `.env` file in the `api/` directory (you can copy from `api/.env.exampl
 
 - **PORT** (optional): Server port number. Default: `3000`
 - **MAX_FILE_SIZE** (optional): Maximum file upload size in MB (megabytes). This value is converted to bytes internally. Default: `100` (100 MB)
+- **REQUEST_TIMEOUT** (optional): Request timeout duration in seconds. Default: `60` (60 seconds)
+- **RATE_LIMIT_ANALYZE** (optional): Rate limit for the analyze endpoint in requests per minute. Default: `100`
+- **RATE_LIMIT_HEALTH** (optional): Rate limit for the health check endpoint in requests per minute. Default: `1000`
 - **E2E_TEST_TIMEOUT** (optional): Timeout for E2E tests in seconds. This value is converted to milliseconds internally. Default: `30` (30 seconds)
 
 Example `.env` file:
 ```env
 PORT=3000
 MAX_FILE_SIZE=100
+REQUEST_TIMEOUT=60
+RATE_LIMIT_ANALYZE=100
+RATE_LIMIT_HEALTH=1000
 E2E_TEST_TIMEOUT=30
 ```
 
@@ -159,7 +188,7 @@ All endpoints are prefixed with `/api`.
 
 **GET** `/api/health`
 
-Returns the health status of the API.
+Returns the health status of the API. This endpoint is rate-limited to 1000 requests per minute (configurable via `RATE_LIMIT_HEALTH` environment variable).
 
 **Response:**
 ```json
@@ -168,6 +197,11 @@ Returns the health status of the API.
   "message": "MP3 Analyzer API is running"
 }
 ```
+
+**Rate Limiting:**
+- Default: 1000 requests per minute
+- Configurable via `RATE_LIMIT_HEALTH` environment variable
+- Returns `429 Too Many Requests` when limit is exceeded
 
 ### API Information
 
@@ -191,7 +225,12 @@ Returns API information and available endpoints.
 
 **POST** `/api/file-upload`
 
-Analyzes an MP3 file and returns frame count and other metadata. Only MPEG-1 Layer 3 (MP3) files are supported.
+Analyzes an MP3 file and returns frame count. Only MPEG-1 Layer 3 (MP3) files are supported.
+
+This endpoint includes:
+- **Rate Limiting**: Default 100 requests per minute (configurable via `RATE_LIMIT_ANALYZE` environment variable)
+- **Request Timeout**: Default 60 seconds (configurable via `REQUEST_TIMEOUT` environment variable)
+- **File Validation**: Validates file type and size before processing
 
 **Request:**
 - Content-Type: `multipart/form-data`
@@ -227,6 +266,24 @@ curl -X POST http://localhost:3000/api/file-upload \
 }
 ```
 
+**Response (Error - 408):**
+```json
+{
+  "status": "error",
+  "error": "REQUEST_TIMEOUT",
+  "message": "Request timeout"
+}
+```
+
+**Response (Error - 429):**
+```json
+{
+  "status": "error",
+  "error": "RATE_LIMIT_EXCEEDED",
+  "message": "Too many requests, please try again later"
+}
+```
+
 **Response (Error - 500):**
 ```json
 {
@@ -239,6 +296,8 @@ curl -X POST http://localhost:3000/api/file-upload \
 **Status Codes:**
 - `200` - Success
 - `400` - Bad Request (no file uploaded or invalid file type)
+- `408` - Request Timeout (request exceeded timeout duration)
+- `429` - Too Many Requests (rate limit exceeded)
 - `500` - Internal Server Error
 
 ## Testing
@@ -347,6 +406,87 @@ The collection includes the following requests:
 8. Click "Send" to test the endpoint
 
 The collection uses the `{{baseUrl}}` variable, so all requests will automatically use the correct base URL based on your selected environment.
+
+## Code Quality & Development Tools
+
+The project includes several tools to ensure code quality and consistency:
+
+### TypeScript Type Checking
+
+Run TypeScript type checking without emitting files:
+
+```bash
+cd api
+npm run type-check
+```
+
+### Linting (ESLint)
+
+The project uses ESLint with TypeScript support for code quality and consistency.
+
+1. **Run linter:**
+   ```bash
+   cd api
+   npm run lint
+   ```
+
+2. **Fix linting issues automatically:**
+   ```bash
+   cd api
+   npm run lint:fix
+   ```
+
+ESLint is configured with:
+- TypeScript-specific rules
+- Recommended ESLint rules
+- Prettier integration (prevents conflicts between ESLint and Prettier)
+
+### Code Formatting (Prettier)
+
+The project uses Prettier for consistent code formatting.
+
+1. **Format code:**
+   ```bash
+   cd api
+   npm run format
+   ```
+
+2. **Check formatting (without modifying files):**
+   ```bash
+   cd api
+   npm run format:check
+   ```
+
+Prettier configuration:
+- Single quotes
+- Semicolons enabled
+- 100 character line width
+- 2 space indentation
+- LF line endings
+
+### Pre-commit Recommendations
+
+It's recommended to run these commands before committing:
+```bash
+cd api
+npm run type-check
+npm run lint
+npm run format:check
+npm test
+```
+
+## Future Scalability Considerations
+
+### Worker Threads for Parallel Processing
+
+For future scalability improvements, the next step would be to implement **worker threads** to allow for non-blocking parallel processing of MP3 files. This would enable the API to:
+
+- Process multiple MP3 files concurrently without blocking the main event loop
+- Better utilize multi-core systems for CPU-intensive MP3 parsing operations
+- Improve overall throughput when handling multiple simultaneous file uploads
+- Maintain responsiveness even under high load
+
+However, for the deadline of this assessment, implementing worker threads ended up being out of scope. The current implementation provides a solid foundation that can be extended with worker threads in future iterations.
 
 ---
 

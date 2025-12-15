@@ -7,8 +7,9 @@ WORKDIR /app
 # Copy root package files and lock file
 COPY package.json package-lock.json ./
 
-# Copy API package files
+# Copy workspace package files (needed for npm workspaces)
 COPY api/package.json ./api/
+COPY shared/package.json ./shared/
 
 # Install all dependencies (including dev dependencies for workspace)
 # npm workspaces will hoist dependencies to root node_modules
@@ -27,4 +28,5 @@ ENV NODE_ENV=development
 # Start the application in dev mode (tsx watch)
 # Run from api directory to ensure proper module resolution
 WORKDIR /app/api
-CMD ["npm", "run", "dev"]
+# Use exec to ensure npm becomes PID 1 and forwards signals correctly
+CMD ["sh", "-c", "exec npm run dev"]
