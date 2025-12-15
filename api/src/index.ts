@@ -9,10 +9,8 @@ const app = express();
 // Middleware
 setupMiddleware(app);
 
-
 // Routes - mount all routes under /api
 app.use(ROUTES.API_BASE, routes);
-
 
 // Start server - bind to HOST to accept connections from all interfaces
 const server = app.listen(PORT, HOST, () => {
@@ -22,7 +20,7 @@ const server = app.listen(PORT, HOST, () => {
 });
 
 // Graceful shutdown handling
-const gracefulShutdown = (signal: string) => {
+const gracefulShutdown = (signal: string): void => {
   console.log(`Received ${signal}, shutting down gracefully...`);
   server.close(() => {
     console.log('Server closed');
