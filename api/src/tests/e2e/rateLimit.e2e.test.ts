@@ -9,7 +9,7 @@ import { setupMiddleware } from '../../middleware';
 
 describe('Rate Limiting E2E', () => {
   let app: Express;
-  
+
   // Use lower limits for faster testing
   // Note: Set RATE_LIMIT_ANALYZE and RATE_LIMIT_HEALTH env vars before running tests
   // to use custom limits. Otherwise, defaults will be used.
@@ -25,7 +25,9 @@ describe('Rate Limiting E2E', () => {
   /**
    * Helper to get the actual rate limit from response headers
    */
-  const getRateLimitFromHeaders = (headers: Record<string, string | string[] | undefined>): number => {
+  const getRateLimitFromHeaders = (
+    headers: Record<string, string | string[] | undefined>
+  ): number => {
     const limit = headers['ratelimit-limit'];
     if (typeof limit === 'string') {
       return parseInt(limit, 10);
@@ -60,10 +62,10 @@ describe('Rate Limiting E2E', () => {
         // First, get the actual rate limit from headers
         const firstResponse = await request(app).post(`${ROUTES.API_BASE}${ROUTES.FILE_UPLOAD}`);
         const actualLimit = getRateLimitFromHeaders(firstResponse.headers);
-        
+
         // If we couldn't get the limit from headers, use the test limit
         const limitToTest = actualLimit > 0 ? actualLimit : TEST_RATE_LIMIT_ANALYZE;
-        
+
         // Make requests up to the limit (skip the first one we already made)
         for (let i = 1; i < limitToTest; i++) {
           await request(app).post(`${ROUTES.API_BASE}${ROUTES.FILE_UPLOAD}`);
@@ -113,10 +115,10 @@ describe('Rate Limiting E2E', () => {
         // First, get the actual rate limit from headers
         const firstResponse = await request(app).get(`${ROUTES.API_BASE}${ROUTES.HEALTH}`);
         const actualLimit = getRateLimitFromHeaders(firstResponse.headers);
-        
+
         // If we couldn't get the limit from headers, use the test limit
         const limitToTest = actualLimit > 0 ? actualLimit : TEST_RATE_LIMIT_HEALTH;
-        
+
         // Make requests up to the limit (skip the first one we already made)
         for (let i = 1; i < limitToTest; i++) {
           await request(app).get(`${ROUTES.API_BASE}${ROUTES.HEALTH}`);

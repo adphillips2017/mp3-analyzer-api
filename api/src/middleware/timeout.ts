@@ -40,11 +40,7 @@ export const requestTimeout = timeout(timeoutMs, { respond: false });
  * Middleware to check for timeout and return appropriate error response
  * Should be placed after the timeout middleware but before route handlers
  */
-export const timeoutErrorHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const timeoutErrorHandler = (req: Request, res: Response, next: NextFunction): void => {
   // Check if this request has timed out
   if (req.timedout) {
     // If response headers haven't been sent, send timeout error
