@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import { AnalyzeResponse, ErrorMessages, ResponseStatus } from '@mp3-analyzer/shared';
 import { FileRequest } from '../models/RequestWithFile';
-import { HttpStatus } from '../models/HttpStatus';
+import { HttpStatus } from '../constants/HttpStatus';
+import { ERROR_CODES } from '../constants/Api';
 import AnalyzeService from '../services/analyze.service';
-
 
 class AnalyzeController {
   /**
@@ -11,14 +11,13 @@ class AnalyzeController {
    * Accepts MP3 file and returns frame count
    * Note: Only MPEG-1 Layer 3 files are supported
    */
-  async analyze(req: FileRequest, res: Response<AnalyzeResponse>): Promise<void> {
+  analyze(req: FileRequest, res: Response<AnalyzeResponse>): void {
     try {
       // Check if file was uploaded
       // Note: If multer fileFilter rejects the file, req.file will be undefined
-      // and req.fileValidationError may contain the error message
       if (!req.file) {
         // Check if there was a file validation error (invalid file type)
-        const fileValidationError = (req as any).fileValidationError;
+        const fileValidationError = req.fileValidationError;
         if (fileValidationError) {
           const errorResponse: AnalyzeResponse = {
             status: ResponseStatus.ERROR,
@@ -28,7 +27,7 @@ class AnalyzeController {
           res.status(HttpStatus.BAD_REQUEST).json(errorResponse);
           return;
         }
-        
+
         // No file uploaded at all
         const errorResponse: AnalyzeResponse = {
           status: ResponseStatus.ERROR,
@@ -39,21 +38,16 @@ class AnalyzeController {
         return;
       }
 
-      const frames = await AnalyzeService.getMp3FrameCount(req.file.buffer);
+      const frames = AnalyzeService.getMp3FrameCount(req.file.buffer);
 
-      // Return simple confirmation response for now.
-      const successResponse: AnalyzeResponse = {
-        status: ResponseStatus.RECEIVED,
-        fileName: req.file.originalname,
-        frameCount: frames
-      };
-      res.status(HttpStatus.OK).json(successResponse);
-    } catch (error) {
+      res.status(HttpStatus.OK).json({ frameCount: frames });
+    } catch (error: unknown) {
       console.error('Error analyzing MP3:', error);
       const errorResponse: AnalyzeResponse = {
         status: ResponseStatus.ERROR,
-        error: 'ANALYSIS_ERROR',
-        message: error instanceof Error ? error.message : 'An error occurred while analyzing the MP3 file'
+        error: ERROR_CODES.ANALYSIS_ERROR,
+        message:
+          error instanceof Error ? error.message : 'An error occurred while analyzing the MP3 file'
       };
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
     }

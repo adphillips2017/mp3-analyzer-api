@@ -1,18 +1,19 @@
 import express from 'express';
 import routes from './routes';
 import { setupMiddleware } from './middleware';
+import { ROUTES } from './constants/Routes';
+import { PORT } from './constants/Server';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 setupMiddleware(app);
 
 // Routes - mount all routes under /api
-app.use('/api', routes);
+app.use(ROUTES.API_BASE, routes);
 
 // Start server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Health check: http://localhost:${PORT}${ROUTES.API_BASE}${ROUTES.HEALTH}`);
 });

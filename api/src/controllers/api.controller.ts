@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import { HttpStatus } from '../models/HttpStatus';
+import { HttpStatus } from '../constants/HttpStatus';
+import { API_NAME, API_VERSION, HEALTH_STATUS } from '../constants/Api';
+import { ROUTES } from '../constants/Routes';
 
 /**
  * Controller for general API endpoints
@@ -10,9 +12,9 @@ class ApiController {
    * Returns API health status
    */
   health(_req: Request, res: Response): void {
-    res.status(HttpStatus.OK).json({ 
-      status: 'ok', 
-      message: 'MP3 Analyzer API is running' 
+    res.status(HttpStatus.OK).json({
+      status: HEALTH_STATUS,
+      message: `${API_NAME} is running`
     });
   }
 
@@ -22,11 +24,11 @@ class ApiController {
    */
   info(_req: Request, res: Response): void {
     res.status(HttpStatus.OK).json({
-      message: 'MP3 Analyzer API',
-      version: '1.0.0',
+      message: API_NAME,
+      version: API_VERSION,
       endpoints: {
-        health: '/api/health',
-        analyze: '/api/analyze (POST)'
+        health: `${ROUTES.API_BASE}${ROUTES.HEALTH}`,
+        analyze: `${ROUTES.API_BASE}${ROUTES.FILE_UPLOAD} (POST)`
       }
     });
   }
