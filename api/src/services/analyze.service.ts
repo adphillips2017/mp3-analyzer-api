@@ -20,6 +20,19 @@
 
 import { BITRATES_V1_L3, SAMPLE_RATES_V1 } from '../constants/Mp3';
 import { Mp3Header } from '../models/Mp3';
+import {
+  FRAME_SYNC_MASK,
+  FRAME_SYNC_VALUE,
+  FRAME_LENGTH_MULTIPLIER,
+  ID3V1_IDENTIFIER,
+  ID3V1_TAG_SIZE,
+  ID3V2_HEADER_SIZE,
+  ID3V2_IDENTIFIER,
+  KBPS_TO_BPS,
+  LAYER,
+  MP3_FRAME_HEADER_SIZE,
+  MPEG_VERSION
+} from '../constants/Mp3Parsing';
 
 class AnalyzeService {
   /**
@@ -42,7 +55,7 @@ class AnalyzeService {
     const endPosition = this.getEndPosition(file);
 
     // Keep going until we're too close to the end to read a header
-    while (position < endPosition - 4) {
+    while (position < endPosition - MP3_FRAME_HEADER_SIZE) {
       // Try to parse a header at this position
       const header = this.parseFrameHeader(file, position);
 
@@ -80,13 +93,17 @@ class AnalyzeService {
    * @returns Position after the ID3v2 tag (or original position if no tag)
    */
   private skipId3v2Tag(file: Buffer, position: number): number {
-    // Check if we have enough bytes for an ID3v2 header (at least 10 bytes)
-    if (position + 10 > file.length) {
+    // Check if we have enough bytes for an ID3v2 header
+    if (position + ID3V2_HEADER_SIZE > file.length) {
       return position;
     }
 
     // Check for "ID3" identifier
-    if (file[position] === 0x49 && file[position + 1] === 0x44 && file[position + 2] === 0x33) {
+    if (
+      file[position] === ID3V2_IDENTIFIER.I &&
+      file[position + 1] === ID3V2_IDENTIFIER.D &&
+      file[position + 2] === ID3V2_IDENTIFIER.THREE
+    ) {
       // Found ID3v2 tag
       // Read size from bytes 6-9 (synchsafe integer)
       const size =
@@ -97,7 +114,7 @@ class AnalyzeService {
 
       // ID3v2 header is 10 bytes, then the tag data
       // Some versions may have a footer, but we'll skip based on header size
-      const tagEnd = position + 10 + size;
+      const tagEnd = position + ID3V2_HEADER_SIZE + size;
 
       return tagEnd;
     }
@@ -113,12 +130,12 @@ class AnalyzeService {
    */
   private getEndPosition(file: Buffer): number {
     // Check for ID3v1 tag at the end (last 128 bytes)
-    if (file.length >= 128) {
-      const id3v1Position = file.length - 128;
+    if (file.length >= ID3V1_TAG_SIZE) {
+      const id3v1Position = file.length - ID3V1_TAG_SIZE;
       if (
-        file[id3v1Position] === 0x54 &&     // 'T'
-        file[id3v1Position + 1] === 0x41 && // 'A'
-        file[id3v1Position + 2] === 0x47    // 'G'
+        file[id3v1Position] === ID3V1_IDENTIFIER.T &&
+        file[id3v1Position + 1] === ID3V1_IDENTIFIER.A &&
+        file[id3v1Position + 2] === ID3V1_IDENTIFIER.G
       ) {
         return id3v1Position;
       }
@@ -138,7 +155,7 @@ class AnalyzeService {
 
     // Frame sync: First 11 bits should ALL be 1s
     // We shift right 21 positions to get the top 11 bits
-    const frameSync = (headerBytes >> 21) & 0x7ff; // 0x7FF = 11111111111 in binary
+    const frameSync = (headerBytes >> 21) & FRAME_SYNC_MASK;
 
     // MPEG Version: Next 2 bits (bits 20-19)
     const mpegVersion = (headerBytes >> 19) & 0x03; // 0x03 = 11 in binary (2 bits)
@@ -166,20 +183,20 @@ class AnalyzeService {
   }
 
   isValidFrame(header: Mp3Header): boolean {
-    // Frame sync must be all 1s (0x7FF = 2047 in decimal)
-    if (header.frameSync !== 0x7ff) {
+    // Frame sync must be all 1s
+    if (header.frameSync !== FRAME_SYNC_VALUE) {
       return false;
     }
 
     // MPEG Version must be 3 (Version 1)
     // 0 = Version 2.5, 1 = reserved, 2 = Version 2, 3 = Version 1
-    if (header.mpegVersion !== 3) {
+    if (header.mpegVersion !== MPEG_VERSION.V1) {
       return false;
     }
 
     // Layer must be 1 (Layer III)
     // 0 = reserved, 1 = Layer III, 2 = Layer II, 3 = Layer I
-    if (header.layer !== 1) {
+    if (header.layer !== LAYER.LAYER_III) {
       return false;
     }
 
@@ -204,7 +221,7 @@ class AnalyzeService {
     const sampleRate = SAMPLE_RATES_V1[header.sampleRateIndex];
 
     // Convert bitrate from kbps to bps (bits per second)
-    const bitrateInBps = bitrate * 1000;
+    const bitrateInBps = bitrate * KBPS_TO_BPS;
 
     // The magic formula for MPEG v1 Layer III:
     // Frame Length = (144 * bitrate / sample_rate) + padding
@@ -212,7 +229,7 @@ class AnalyzeService {
     // Why 144? It comes from:
     // - Each frame has 1152 samples
     // - 1152 samples / 8 bits per byte = 144
-    const frameLength = Math.floor((144 * bitrateInBps) / sampleRate) + header.padding;
+    const frameLength = Math.floor((FRAME_LENGTH_MULTIPLIER * bitrateInBps) / sampleRate) + header.padding;
 
     return frameLength;
   }

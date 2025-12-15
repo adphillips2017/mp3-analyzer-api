@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AnalyzeResponse, ErrorMessages, ResponseStatus } from '@mp3-analyzer/shared';
 import { FileRequest } from '../models/RequestWithFile';
 import { HttpStatus } from '../constants/HttpStatus';
+import { ERROR_CODES } from '../constants/Api';
 import AnalyzeService from '../services/analyze.service';
 
 class AnalyzeController {
@@ -44,7 +45,7 @@ class AnalyzeController {
       console.error('Error analyzing MP3:', error);
       const errorResponse: AnalyzeResponse = {
         status: ResponseStatus.ERROR,
-        error: 'ANALYSIS_ERROR',
+        error: ERROR_CODES.ANALYSIS_ERROR,
         message:
           error instanceof Error ? error.message : 'An error occurred while analyzing the MP3 file'
       };

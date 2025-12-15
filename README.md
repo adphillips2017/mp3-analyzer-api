@@ -107,12 +107,14 @@ The API will be available at `http://localhost:3000`
 Create a `.env` file in the `api/` directory (you can copy from `api/.env.example`) to configure the following options:
 
 - **PORT** (optional): Server port number. Default: `3000`
-- **E2E_TEST_TIMEOUT** (optional): Timeout in milliseconds for E2E tests. Default: `30000` (30 seconds)
+- **MAX_FILE_SIZE** (optional): Maximum file upload size in MB (megabytes). This value is converted to bytes internally. Default: `100` (100 MB)
+- **E2E_TEST_TIMEOUT** (optional): Timeout for E2E tests in seconds. This value is converted to milliseconds internally. Default: `30` (30 seconds)
 
 Example `.env` file:
 ```env
 PORT=3000
-E2E_TEST_TIMEOUT=30000
+MAX_FILE_SIZE=100
+E2E_TEST_TIMEOUT=30
 ```
 
 ### Docker Development (with Hot-Reloading)
@@ -301,7 +303,7 @@ These files are used by the E2E test suite to verify the MP3 analysis functional
 ### Test Configuration
 
 E2E tests can be configured via environment variables in the `.env` file:
-- `E2E_TEST_TIMEOUT`: Timeout in milliseconds for E2E tests (default: 30000)
+- `E2E_TEST_TIMEOUT`: Timeout in seconds for E2E tests (default: 30). This value is converted to milliseconds internally.
 
 ## Testing with Postman
 

@@ -1,6 +1,12 @@
 import multer from 'multer';
 import { Request } from 'express';
 import { ErrorMessages } from '@mp3-analyzer/shared';
+import {
+  FILE_FIELD_NAME,
+  MAX_FILE_SIZE_BYTES,
+  MP3_EXTENSION,
+  MP3_MIME_TYPES
+} from '../constants/FileUpload';
 
 // Configure multer for memory storage (file will be in req.file.buffer)
 const storage = multer.memoryStorage();
@@ -25,9 +31,9 @@ const fileFilter = (
 
 const isMp3 = (file: Express.Multer.File): boolean => {
   return (
-    file.mimetype === 'audio/mpeg' ||
-    file.mimetype === 'audio/mp3' ||
-    file.originalname.toLowerCase().endsWith('.mp3')
+    file.mimetype === MP3_MIME_TYPES.MPEG ||
+    file.mimetype === MP3_MIME_TYPES.MP3 ||
+    file.originalname.toLowerCase().endsWith(MP3_EXTENSION)
   );
 };
 
@@ -36,9 +42,9 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB limit
+    fileSize: MAX_FILE_SIZE_BYTES
   }
 });
 
 // Middleware for single file upload with field name 'file'
-export const uploadSingle = upload.single('file');
+export const uploadSingle = upload.single(FILE_FIELD_NAME);
