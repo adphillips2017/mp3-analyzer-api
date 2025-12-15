@@ -81,12 +81,7 @@ describe('AnalyzeController', () => {
 
       // Should return success response with frame count
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
-      const expectedSuccessResponse: AnalyzeResponse = {
-        status: ResponseStatus.RECEIVED,
-        fileName: 'test.mp3',
-        frameCount: mockFrameCount,
-      };
-      expect(responseJson).toHaveBeenCalledWith(expectedSuccessResponse);
+      expect(responseJson).toHaveBeenCalledWith({ frameCount: mockFrameCount });
     });
 
     it('should handle different file names correctly', async () => {
@@ -110,12 +105,7 @@ describe('AnalyzeController', () => {
       );
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
-      const expectedSuccessResponse: AnalyzeResponse = {
-        status: ResponseStatus.RECEIVED,
-        fileName: 'different-file.mp3',
-        frameCount: mockFrameCount,
-      };
-      expect(responseJson).toHaveBeenCalledWith(expectedSuccessResponse);
+      expect(responseJson).toHaveBeenCalledWith({ frameCount: mockFrameCount });
     });
 
     it('should handle zero frame count', async () => {
@@ -139,12 +129,7 @@ describe('AnalyzeController', () => {
       );
 
       expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
-      const expectedSuccessResponse: AnalyzeResponse = {
-        status: ResponseStatus.RECEIVED,
-        fileName: 'empty.mp3',
-        frameCount: 0,
-      };
-      expect(responseJson).toHaveBeenCalledWith(expectedSuccessResponse);
+      expect(responseJson).toHaveBeenCalledWith({ frameCount: 0 });
     });
   });
 });

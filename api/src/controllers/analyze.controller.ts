@@ -15,7 +15,6 @@ class AnalyzeController {
     try {
       // Check if file was uploaded
       // Note: If multer fileFilter rejects the file, req.file will be undefined
-      // and req.fileValidationError may contain the error message
       if (!req.file) {
         // Check if there was a file validation error (invalid file type)
         const fileValidationError = (req as any).fileValidationError;
@@ -41,13 +40,7 @@ class AnalyzeController {
 
       const frames = await AnalyzeService.getMp3FrameCount(req.file.buffer);
 
-      // Return simple confirmation response for now.
-      const successResponse: AnalyzeResponse = {
-        status: ResponseStatus.RECEIVED,
-        fileName: req.file.originalname,
-        frameCount: frames
-      };
-      res.status(HttpStatus.OK).json(successResponse);
+      res.status(HttpStatus.OK).json({ frameCount: frames });
     } catch (error) {
       console.error('Error analyzing MP3:', error);
       const errorResponse: AnalyzeResponse = {
